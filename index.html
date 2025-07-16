@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <title>Temperatur Formu</title>
+  <style>
+    body { font-family: Arial; max-width: 600px; margin: auto; padding: 20px; }
+    label { display: block; margin-top: 15px; }
+    select, input, button { width: 100%; padding: 8px; margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <h2>Temperatur Məlumatları</h2>
+  <form id="temp_form">
+    <label for="date">Tarix:</label>
+    <input type="date" id="date" name="date" required>
+
+    <label for="dezgah">Dezgah:</label>
+    <select id="dezgah" name="dezgah" required></select>
+
+    <label for="yer">Yer:</label>
+    <select id="yer" name="yer" required></select>
+
+    <label for="temp">Temperatur:</label>
+    <input type="number" step="0.1" id="temp" name="temp" required>
+
+    <button type="submit">Göndər</button>
+  </form>
+
+  <script>
+    const dezgahSelect = document.getElementById('dezgah');
+    const yerSelect = document.getElementById('yer');
+    const form = document.getElementById('temp_form');
+
+    const APP_SCRIPT_BASE = 'https://script.google.com/macros/s/AKfycbxiVS8ECftNdFpwvdMIbBwQaftgfChVL2COY00gesB6-eeiDTiwJy4OQcm0EZtM3xQ_/exec';
+
+
+    // 1. Sayt açılarkən dezgah siyahısını doldur
+    fetch(APP_SCRIPT_BASE + '?type=dezgah')
+      .then(r => r.json())
+      .then(data => {
+        dezgahSelect.innerHTML = '<option value="">Seçin</option>';
+        data.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          dezgahSelect.appendChild(opt);
+        });
+      });
+
+    // 2. Dezgah seçiləndə uyğun yerləri yüklə
+    dezgahSelect.addEventListener('change', () => {
+      const selected = dezgahSelect.value;
+      fetch(APP_SCRIPT_BASE + '?type=yerler&dezgah=' + encodeURIComponent(selected))
+        .then(r => r.json())
+        .then(data => {
+          yerSelect.innerHTML = '<option value="">Seçin</option>';
+          data.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d;
+            opt.textContent = d;
+            yerSelect.appendChild(opt);
+          });
+        });
+    });
+
+    // 3. Form göndərilməsi
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const body = {
+        date: form.date.value,
+        dezgah: form.dezgah.value,
+        yer: form.yer.value,
+        temp: form.temp.value
+      };
+
+      fetch(APP_SCRIPT_BASE, {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' }
+      }).then(r => r.text()).then(res => {
+        alert('Məlumat göndərildi!');
+        form.reset();
+      });
+    });
+  </script>
+</body>
+</html>
